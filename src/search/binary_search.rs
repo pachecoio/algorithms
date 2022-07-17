@@ -1,5 +1,15 @@
-/// Return the index of the number if found, otherwise return None
-fn search(list: &[i32], target: i32) -> Option<usize> {
+/// Given a sorted list and a target number, returns the index of the number if found, otherwise return None
+/// 
+/// Examples
+/// ```
+/// use algorithms::search::binary_search::search;
+/// 
+/// let list = vec![1, 2, 3, 4, 5];
+/// let target = 5;
+/// let result = search(&list, target);
+/// assert_eq!(result, Some(4));
+/// ```
+pub fn search(list: &[i32], target: i32) -> Option<usize> {
     if list.len() == 0 { return None }
     let mid = list.len() / 2;
     if list[mid] > target { search(&list[..mid], target) }
