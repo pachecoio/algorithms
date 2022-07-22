@@ -55,7 +55,6 @@ mod tests {
     fn test_random_list_sorting() {
         let mut list = gen_random_list(10000);
         quicksort(&mut list);
-        assert_eq!(list.len(), list.len());
 
         for i in 1..list.len() - 1 {
             assert!(list[i] >= list[i - 1]);
