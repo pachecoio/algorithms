@@ -1,74 +1,69 @@
-use rand::Rng;
+use rayon;
 
-pub fn quicksort(list: &[usize]) -> Vec<usize>{
-	if list.len() == 0 { return Vec::new(); }
-	if list.len() == 1 { return vec![list[0]]; }
-	let mut smaller_list = Vec::new();
-	let mut bigger_list = Vec::new();
+fn quicksort<T: PartialOrd + Send>(v: &mut [T]) {
+    if v.len() <= 1 {
+        return;
+    }
 
-	let mut rng = rand::thread_rng();
-	let pivot = rng.gen_range(0..list.len());
+    let mid = partition(v);
+    let (lo, hi) = v.split_at_mut(mid);
+    rayon::join(|| quicksort(lo), || quicksort(hi));
+}
 
-	for i in 0..list.len() {
-		if i == pivot { continue }
-		if list[i] <= list[pivot] {
-			smaller_list.push(list[i]);
-		} else {
-			bigger_list.push(list[i]);
-		}
-	}
-
-	let mut left = quicksort(&smaller_list);
-	let mut right = quicksort(&bigger_list);
-
-	left.push(list[pivot]);
-	left.append(&mut right);
-
-	left
-
+fn partition<T: PartialOrd + Send>(v: &mut [T]) -> usize {
+    let pivot = v.len() - 1;
+    let mut i = 0;
+    for j in 0..pivot {
+        if v[j] <= v[pivot] {
+            v.swap(i, j);
+            i += 1;
+        }
+    }
+    v.swap(i, pivot);
+    i
 }
 
 #[cfg(test)]
 mod tests {
-	use super::*;
+    use rand::Rng;
 
-	#[test]
-	fn test_sorting_base_case() {
-		let list: Vec<usize> = Vec::new();
-		quicksort(&list[..]);
-		assert_eq!(list, Vec::new());
+    use super::*;
 
-		let list2: Vec<usize> = vec![1];
-		quicksort(&list2[..]);
-		assert_eq!(list2, vec![1]);
+    #[test]
+    fn test_sorting_base_case() {
+        let mut list: Vec<usize> = Vec::new();
+        quicksort(&mut list[..]);
+        assert_eq!(list, Vec::new());
 
-		let sorted_list = vec![1, 2, 3];
-		quicksort(&sorted_list[..]);
-		assert_eq!(sorted_list, vec![1, 2, 3]);
-	}
+        let mut list2: Vec<usize> = vec![1];
+        quicksort(&mut list2[..]);
+        assert_eq!(list2, vec![1]);
 
-	#[test]
-	fn test_sort_small_list() {
-		let list = vec![2, 1];
-		let result = quicksort(&list[..]);
-		assert_eq!(result, vec![1, 2]);
-	}
+        let mut sorted_list = vec![1, 2, 3];
+        quicksort(&mut sorted_list[..]);
+        assert_eq!(sorted_list, vec![1, 2, 3]);
+    }
 
-	#[test]
-	fn test_random_list_sorting() {
-		let mut list = gen_random_list(1000);
-		let result = quicksort(&list);
-		assert_eq!(result.len(), list.len());
+    #[test]
+    fn test_sort_small_list() {
+        let mut list = vec![2, 1];
+        quicksort(&mut list[..]);
+        assert_eq!(list, vec![1, 2]);
+    }
 
-		// Default sort the input list to compare with the quicksort result
-		list.sort();
+    #[test]
+    fn test_random_list_sorting() {
+        let mut list = gen_random_list(10000);
+        quicksort(&mut list);
+        assert_eq!(list.len(), list.len());
 
-		assert_eq!(result, list);
-	}
+        for i in 1..list.len() - 1 {
+            assert!(list[i] >= list[i - 1]);
+        }
+    }
 
-	fn gen_random_list(length: usize) -> Vec<usize> {
-		let mut rng = rand::thread_rng();
-		(0..length).map(|_| { rng.gen_range(0..length) }).collect()
-	}
-
+    fn gen_random_list(length: usize) -> Vec<usize> {
+        let mut rng = rand::thread_rng();
+        (0..length).map(|_| rng.gen_range(0..length)).collect()
+    }
 }
