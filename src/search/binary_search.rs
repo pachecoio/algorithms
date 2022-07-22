@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 /// Given a sorted list and a target number, returns the index of the number if found, otherwise return None
 /// 
 /// Examples
@@ -10,17 +12,17 @@
 /// assert_eq!(result, Some(4));
 /// ```
 pub fn search(list: &[i32], target: i32) -> Option<usize> {
-    if list.len() == 0 { return None }
+    if list.is_empty() { return None }
     let mid = list.len() / 2;
-    if list[mid] > target { search(&list[..mid], target) }
-    else if list[mid] < target { 
-        let result = search(&list[mid+1..], target);
-        match result {
+
+    match list[mid].cmp(&target) {
+        Ordering::Greater => search(&list[..mid], target),
+        Ordering::Less => match search(&list[mid+1..], target) {
             Some(i) => Some(mid + i + 1),
             None => None
-        }
+        },
+        Ordering::Equal => Some(mid)
     }
-    else { Some(mid) }
 }
 
 #[cfg(test)]
